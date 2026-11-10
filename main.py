@@ -23,7 +23,9 @@ def add():
     tip = input("Тип: ")
     name = input("Наименование: ")
     room = input("Аудитория: ")
-    status = input("Статус: ")
+    status = input("Статус: ").lower()
+    if status in ['1','2','3']:
+        status = ["исправно", "требует ремонта", "списано"][int(status)-1]
     while True:
         ok, text = inventory.add_item(
             {"id": (max([x["id"] for x in items]) + 1) if items else 1, 
@@ -42,6 +44,7 @@ def add():
             status = input("Статус: ")
             continue
         else:
+            print(text)
             tip = input("Тип: ")
             name = input("Наименование: ")
             room = input("Аудитория: ")
