@@ -1,21 +1,50 @@
 import inventory
 import storage
 # 1
+items = inventory.get()
 def show():
-    items = inventory.get()
-    print(f"{'№':<4} | {'Тип':<10} | {'Наименование':<25} | {'Каб.':<12} | {'Состояние'}")
-    print("-" * 80)
-    
-    for item in items:
-        print(f"{item['id']:<4} | "
-              f"{item['type']:<10} | "
-              f"{item['name']:<25} | "
-              f"{item['room']:<12} | "
-              f"{item['status']}")
-    print("-" * 80+"\n")
+    if items:
+        print(f"{'№':<4} | {'Тип':<10} | {'Наименование':<25} | {'Каб.':<12} | {'Состояние'}")
+        print("-" * 80)
+        
+        for item in items:
+            print(f"{item['id']:<4} | "
+                f"{item['type']:<10} | "
+                f"{item['name']:<25} | "
+                f"{item['room']:<12} | "
+                f"{item['status']}")
+        print("-" * 80+"\n")
+    else:
+        print("Блин, список пустой")
 # 2
 def add():
-    print("Будет добавление здесь короче")
+    tip = input("Тип: ")
+    name = input("Наименование: ")
+    room = input("Аудитория: ")
+    status = input("Статус: ")
+    while True:
+        ok, text = inventory.add_item(
+            {"id": (max([x["id"] for x in items]) + 1) if items else 1, 
+            "type": tip,
+            "name": name,
+            "room": room,
+            "status": status}
+            )
+        if ok:
+            print(text)
+            break
+        elif text == "Ошибка: неверное состояние (должно быть: исправно, требует ремонта, списано).":
+            print(text)
+            status = input("Статус: ")
+            continue
+        else:
+            tip = input("Тип: ")
+            name = input("Наименование: ")
+            room = input("Аудитория: ")
+            status = input("Статус: ")
+
+
+
 # 3
 def search():
     print("Будет поиск здесь короче")
