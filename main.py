@@ -1,5 +1,6 @@
 import inventory
 import storage
+from datetime import datetime
 # 1
 items = inventory.get()
 def show():
@@ -28,8 +29,9 @@ def add():
             "type": tip,
             "name": name,
             "room": room,
-            "status": status}
-            )
+            "status": status,
+            }
+            ) #"created_at": datetime.now().strftime("%Y-%m-%d %H:%M")
         if ok:
             print(text)
             break
