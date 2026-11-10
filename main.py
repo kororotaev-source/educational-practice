@@ -5,16 +5,17 @@ from datetime import datetime
 items = inventory.get()
 def show():
     if items:
-        print(f"{'№':<4} | {'Тип':<10} | {'Наименование':<25} | {'Каб.':<12} | {'Состояние'}")
-        print("-" * 80)
+        print(f"{'№':<4} | {'Тип':<10} | {'Наименование':<25} | {'Каб.':<7} | {'Состояние':<15} | {'Добавлено'}")
+        print("-" * 92)
         
         for item in items:
             print(f"{item['id']:<4} | "
-                f"{item['type']:<10} | "
-                f"{item['name']:<25} | "
-                f"{item['room']:<12} | "
-                f"{item['status']}")
-        print("-" * 80+"\n")
+                f"{((str(item['type'][:9])+'..') if len(item['type']) > 10 else item['type']+' '):<11}| "
+                f"{((str(item['name'][:24])+'..') if len(item['name']) > 25 else item['name']+' '):<26}| "
+                f"{((str(item['room'][:6])+'..') if len(item['room']) > 7 else item['room']+' '):<8}| "
+                f"{item['status']:<15} | "
+                f"{item['created_at']}")
+        print("-" * 92+"\n")
     else:
         print("Блин, список пустой")
 # 2
@@ -30,8 +31,9 @@ def add():
             "name": name,
             "room": room,
             "status": status,
+            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M")
             }
-            ) #"created_at": datetime.now().strftime("%Y-%m-%d %H:%M")
+        )
         if ok:
             print(text)
             break

@@ -2,37 +2,42 @@ inventory = [
     {
         "id": 1,
         "type": "ПК",
-        "name": "Intel Core i5, 16GB RAM",
+        "name": "Intel Core i5, 16GB RAM, RTX 4090",
         "room": "101",
-        "status": "исправно"
+        "status": "исправно",
+        "created_at": "2026-03-24 12:44"
     },
     {
         "id": 2,
-        "type": "Монитор",
+        "type": "Мониторчикзов",
         "name": "LG 24' IPS",
         "room": "101",
-        "status": "исправно"
+        "status": "исправно",
+        "created_at": "2026-03-24 12:44"
     },
     {
         "id": 3,
         "type": "ПК",
         "name": "AMD Ryzen 5, 8GB RAM",
         "room": "102",
-        "status": "требует ремонта"
+        "status": "требует ремонта",
+        "created_at": "2026-03-24 12:44"
     },
     {
         "id": 4,
         "type": "Принтер",
         "name": "HP LaserJet P1102",
         "room": "Лаборантская",
-        "status": "исправно"
+        "status": "исправно",
+        "created_at": "2026-03-24 12:44"
     },
     {
         "id": 5,
         "type": "Монитор",
         "name": "Samsung 22'",
         "room": "103",
-        "status": "списано"
+        "status": "списано",
+        "created_at": "2026-03-24 12:44"
     }
 ]
 def get():
