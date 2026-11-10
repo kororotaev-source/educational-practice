@@ -37,3 +37,28 @@ inventory = [
 ]
 def get():
     return inventory
+
+def validation(item, exist_items):
+    for field in ["type", "name", "room", "status"]:
+        if not str(item.get(field, "")).strip():
+            return False, f"Ошибка: поле '{field}' не может быть пустым."
+        if len(str(item.get(field, ""))) < 2:
+            return False, f"Ошибка: значение {field} должно быть не менее 2 символов"
+        
+    if item["status"] not in ["исправно", "требует ремонта", "списано"]:
+        return False, "Ошибка: неверное состояние (должно быть: исправно, требует ремонта, списано)."
+        
+    for old_item in exist_items:
+        if str(old_item["id"]) == str(item["id"]):
+            return False, f"Ошибка: оборудование с номером {item['id']} уже существует."
+    
+    return True, "Успех, итем добавлен"
+
+def add_item(item):
+    exist_items = get()
+    ok, text = validation(item, exist_items)
+
+    if ok:
+        exist_items.append(item)
+        return True, text
+    return False, text
