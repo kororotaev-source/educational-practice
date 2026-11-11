@@ -3,7 +3,7 @@ import storage
 from datetime import datetime
 # 1
 items = inventory.get()
-def show():
+def show(items):
     if items:
         print(f"{'№':<4} | {'Тип':<10} | {'Наименование':<25} | {'Каб.':<7} | {'Состояние':<15} | {'Добавлено'}")
         print("-" * 92)
@@ -24,9 +24,12 @@ def add():
     name = input("Наименование: ")
     room = input("Аудитория: ")
     status = input("Статус: ").lower()
-    if status in ['1','2','3']:
-        status = ["исправно", "требует ремонта", "списано"][int(status)-1]
     while True:
+        if status in ['1','2','3']:
+            status = ["исправно", "требует ремонта", "списано"][int(status)-1]
+        if(tip=="0" or name=="0" or room=="0" or status=="0"):
+            print("Завершаю...")
+            break
         ok, text = inventory.add_item(
             {"id": (max([x["id"] for x in items]) + 1) if items else 1, 
             "type": tip,
@@ -49,18 +52,65 @@ def add():
             name = input("Наименование: ")
             room = input("Аудитория: ")
             status = input("Статус: ")
-
-
-
 # 3
 def search():
-    print("Будет поиск здесь короче")
+    key = input("Поиск по какому ключу?.. ")
+    request = input("Что ищем?.. ")
+    while True:
+        if key in ['1','2','3','4','5']:
+            key = ["id", "type", "name", "room", "status"][int(key)-1]
+        if(key=="0" or request=="0"):
+            print("Завершаю...")
+            break
+        ok, text = inventory.search(key,request)
+        if ok:
+            show(text)
+            break
+        elif text=="Ошибка. Неверный ключ, попробуйте ещё раз (1:№, 2:Тип, 3:Наименование, 4:Кабинет, 5:Состояние)":
+            print(text)
+            key = input("Поиск по какому ключу?.. ")
+        else:
+            print(text)
+            break
 # 4
 def change():
-    print("Будет изменение здесь короче")
+    id = input("№ который меняем... ")
+    key = input("Что именно меняем?.. ")
+    request = input("На что меняем... ")
+    while True:
+        if key in ['2','3','4','5']:
+            key = ["type", "name", "room", "status"][int(key)-2]
+        if(id=="0" or key=="0" or request=="0"):
+            print("Завершаю...")
+            break
+        ok, text = inventory.change(id, key, request)
+        if ok:
+            print(text)
+            break
+        elif text=="Ошибка. Неверный ключ, попробуйте ещё раз (2:Тип, 3:Наименование, 4:Кабинет, 5:Состояние)":
+            print(text)
+            key = input("Поиск по какому ключу?.. ")
+        else:
+            print(text)
+            break
 # 5
 def remove():
-    print("Здесь удаление будет короче")
+    while True:
+        id = input("№ который удаляем... ")
+        if(id=="0"):
+            print("Завершаю... ")
+            break
+        confirm = input(f"Вы y или n что {id}? ")
+        if confirm=="y":
+            ok, text = inventory.remove(id)
+            print(text)
+            if ok:
+                break
+        elif confirm=="n":
+            continue
+        else:
+            print("Завершаю...")
+            break
 # Основной алгоритм собсна
 def main():
     menu = """------------------------------
@@ -81,7 +131,7 @@ def main():
             print("Выхожу...\n")
             break
         elif(choice=="1"):
-            show()
+            show(items)
         elif(choice=="2"):
             add()
         elif(choice=="3"):
