@@ -1,23 +1,34 @@
 import inventory
 import storage
 from datetime import datetime
+
+MENU = """------------------------------
+Учёт оборудования
+1. - Показать оборудование
+2. - Добавить оборудование
+3. - Поиск оборудования
+4. - Изменение оборудования
+5. - Убрать оборудование
+0. - Выход
+------------------------------
+Введите число для выбора варианта:.. """
+
 # 1
 items = inventory.get()
 def show(items):
-    if items:
-        print(f"{'№':<4} | {'Тип':<10} | {'Наименование':<25} | {'Каб.':<7} | {'Состояние':<15} | {'Добавлено'}")
-        print("-" * 92)
-        
-        for item in items:
-            print(f"{item['id']:<4} | "
-                f"{((str(item['type'][:9])+'..') if len(item['type']) > 10 else item['type']+' '):<11}| "
-                f"{((str(item['name'][:24])+'..') if len(item['name']) > 25 else item['name']+' '):<26}| "
-                f"{((str(item['room'][:6])+'..') if len(item['room']) > 7 else item['room']+' '):<8}| "
-                f"{item['status']:<15} | "
-                f"{item['created_at']}")
-        print("-" * 92+"\n")
-    else:
-        print("Блин, список пустой")
+    if not items:
+        print("Список пуст")
+        return
+    print(f"{'№':<4} | {'Тип':<10} | {'Наименование':<25} | {'Каб.':<7} | {'Состояние':<15} | {'Добавлено'}")
+    print("-" * 92)
+    for item in items:
+        print(f"{item['id']:<4} | "
+            f"{((str(item['type'][:9])+'..') if len(item['type']) > 10 else item['type']+' '):<11}| "
+            f"{((str(item['name'][:24])+'..') if len(item['name']) > 25 else item['name']+' '):<26}| "
+            f"{((str(item['room'][:6])+'..') if len(item['room']) > 7 else item['room']+' '):<8}| "
+            f"{item['status']:<15} | "
+            f"{item['created_at']}")
+    print("-" * 92+"\n")
 # 2
 def add():
     tip = input("Тип: ")
@@ -89,7 +100,7 @@ def change():
             break
         elif text=="Ошибка. Неверный ключ, попробуйте ещё раз (2:Тип, 3:Наименование, 4:Кабинет, 5:Состояние)":
             print(text)
-            key = input("Поиск по какому ключу?.. ")
+            key = input("Изменяем какое поле?.. ")
         else:
             print(text)
             break
@@ -100,7 +111,7 @@ def remove():
         if(id=="0"):
             print("Завершаю... ")
             break
-        confirm = input(f"Вы y или n что {id}? ")
+        confirm = input(f"Удалить №{id}? (y/n)")
         if confirm=="y":
             ok, text = inventory.remove(id)
             print(text)
@@ -113,35 +124,36 @@ def remove():
             break
 # Основной алгоритм собсна
 def main():
-    menu = """------------------------------
-Учёт оборудования
-1. - Показать оборудование
-2. - Добавить оборудование
-3. - Поиск оборудования
-4. - Изменение оборудования
-5. - Убрать оборудование
-0. - Выход
-------------------------------
-Введите число для выбора варианта:.. """
-    
-    while True:
-        choice = input(menu)
-        print()
-        if(choice=="0"):
-            print("Выхожу...\n")
-            break
-        elif(choice=="1"):
-            show(items)
-        elif(choice=="2"):
-            add()
-        elif(choice=="3"):
-            search()
-        elif(choice=="4"):
-            change()
-        elif(choice=="5"):
-            remove()
-        else:
-            print("Йоу так нельзя писать, давай заново\n")
+    try:
+        inventory.load()
+    except storage.StorageError as e:
+        print(f"Ошибка загрузки данных: {e}")
+        return
+    actions = {
+    "1": lambda: show(inventory.get()),
+    "2": add,
+    "3": search,
+    "4": change,
+    "5": remove,
+    }
+    try:
+        while True:
+            choice = input(MENU).strip()
+            print()
+            if choice == "0":
+                print("Выхожу...\n")
+                break
+            action = actions.get(choice)
+            if action is None:
+                print("Неверный пункт меню, попробуйте ещё раз\n")
+                continue
+            try:
+                action()
+            except storage.StorageError as e:
+                print(f"Ошибка сохранения: {e}\n")
+    except (KeyboardInterrupt, EOFError):
+        print("\nВыхожу...")
+
 # Запуск программы только если запускается именно этот файлик
 if __name__ == "__main__":
     main()
