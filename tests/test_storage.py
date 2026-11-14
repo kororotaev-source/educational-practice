@@ -4,6 +4,9 @@ import pytest
 
 import storage
 
+ITEM = {"id": 1, "type": "ПК", "name": "Тест", "room": "101",
+        "status": "исправно", "created_at": "2026-01-01 00:00"}
+
 
 def test_missing_file_is_created_empty():
     assert not storage.DATA_FILE.exists()
@@ -12,7 +15,7 @@ def test_missing_file_is_created_empty():
 
 
 def test_save_and_load_roundtrip():
-    data = [{"id": 1, "type": "ПК", "name": "Тест", "room": "101", "status": "исправно"}]
+    data = [ITEM, dict(ITEM, id=2, room="7")]
     storage.save_data(data)
     assert storage.load_data() == data
 
@@ -43,17 +46,35 @@ def test_corrupted_file_raises_and_is_not_overwritten():
     assert storage.DATA_FILE.read_text(encoding="utf-8") == broken
 
 
-def test_unknown_structure_raises():
+def wrap(*items):
+    return json.dumps({"version": 1, "items": list(items)}, ensure_ascii=False)
+
+
+@pytest.mark.parametrize("content", [
+    '"просто строка"',                                              # не объект и не список
+    "42",
+    '{"version": 1}',                                               # нет items
+    '{"items": "не список"}',
+    "[1, 2, 3]",                                                    # записи - не объекты
+    wrap({k: v for k, v in ITEM.items() if k != "created_at"}),    # нет обязательного поля
+    wrap(dict(ITEM, name="   ")),                                   # пустое поле
+    wrap(dict(ITEM, room=101)),                                     # поле не текст
+    wrap(dict(ITEM, id="1")),                                       # номер - текст
+    wrap(dict(ITEM, id=True)),                                      # номер - true
+    wrap(ITEM, dict(ITEM, name="Другой")),                          # два одинаковых номера
+])
+def test_unknown_structure_raises(content):
     storage.DATA_FILE.parent.mkdir(parents=True)
-    storage.DATA_FILE.write_text('"просто строка"', encoding="utf-8")
+    storage.DATA_FILE.write_text(content, encoding="utf-8")
     with pytest.raises(storage.StorageError):
         storage.load_data()
+    assert storage.DATA_FILE.read_text(encoding="utf-8") == content   # файл не тронут
 
 
 def test_old_plain_list_format_is_still_read():
     storage.DATA_FILE.parent.mkdir(parents=True)
-    storage.DATA_FILE.write_text('[{"id": 1}]', encoding="utf-8")
-    assert storage.load_data() == [{"id": 1}]
+    storage.DATA_FILE.write_text(json.dumps([ITEM], ensure_ascii=False), encoding="utf-8")
+    assert storage.load_data() == [ITEM]
 
 
 def test_no_temp_files_left_behind():

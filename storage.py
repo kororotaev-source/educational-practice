@@ -7,6 +7,7 @@ from pathlib import Path
 # Файл лежит рядом с программой, независимо от того, откуда её запустили
 DATA_FILE = Path(__file__).parent / "data" / "inventory.json"
 FORMAT_VERSION = 1
+REQUIRED_FIELDS = ["type", "name", "room", "status", "created_at"]   # обязательные текстовые поля записи
 
 
 class StorageError(Exception):
@@ -32,6 +33,19 @@ def save_data(data):
         raise StorageError(f"не удалось сохранить файл {DATA_FILE}: {e}") from e
  
  
+def _problem_with(item):
+    """Возвращает описание проблемы с записью или None, если запись в порядке."""
+    if not isinstance(item, dict):
+        return "это не запись"
+    item_id = item.get("id")
+    if not isinstance(item_id, int) or isinstance(item_id, bool):
+        return "поле 'id' должно быть целым числом"
+    for field in REQUIRED_FIELDS:
+        if not isinstance(item.get(field), str) or not item[field].strip():
+            return f"поле '{field}' отсутствует или пустое"
+    return None
+
+
 def load_data():
     """Читает список записей из JSON.
  
@@ -66,6 +80,12 @@ def load_data():
     else:
         raise StorageError(f"неизвестный формат файла {DATA_FILE}")
  
-    if not all(isinstance(item, dict) for item in items):
-        raise StorageError(f"в файле {DATA_FILE} записи имеют неверный вид")
+    seen_ids = set()
+    for number, item in enumerate(items, start=1):
+        problem = _problem_with(item)
+        if problem is None and item["id"] in seen_ids:
+            problem = f"номер {item['id']} встречается дважды"
+        if problem:
+            raise StorageError(f"в файле {DATA_FILE} запись №{number} неверна: {problem}")
+        seen_ids.add(item["id"])
     return items
