@@ -1,6 +1,5 @@
 import inventory
 import storage
-from datetime import datetime
 
 MENU = """------------------------------
 Учёт оборудования
@@ -13,8 +12,18 @@ MENU = """------------------------------
 ------------------------------
 Введите число для выбора варианта:.. """
 
+PROMPTS = {
+    "type": "Тип",
+    "name": "Наименование",
+    "room": "Аудитория",
+    "status": "Статус (1 - исправно, 2 - требует ремонта, 3 - списано)",
+}
 # 1
 items = inventory.get()
+
+def cancel():
+    print("Завершаю...\n")
+
 def show(items):
     if not items:
         print("Список пуст")
@@ -29,99 +38,89 @@ def show(items):
             f"{item['status']:<15} | "
             f"{item['created_at']}")
     print("-" * 92+"\n")
-# 2
-def add():
-    tip = input("Тип: ")
-    name = input("Наименование: ")
-    room = input("Аудитория: ")
-    status = input("Статус: ").lower()
+# нормализация для функсий
+["исправно", "требует ремонта", "списано"]
+
+def ask_field(field,prefix=""):
+    """Спрашивает значение, пока оно не станет допустимым. '0' - отмена (вернёт None)."""
     while True:
-        if status in ['1','2','3']:
-            status = ["исправно", "требует ремонта", "списано"][int(status)-1]
-        if(tip=="0" or name=="0" or room=="0" or status=="0"):
-            print("Завершаю...")
-            break
-        ok, text = inventory.add_item(
-            {"id": (max([x["id"] for x in items]) + 1) if items else 1, 
-            "type": tip,
-            "name": name,
-            "room": room,
-            "status": status,
-            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M")
-            }
-        )
-        if ok:
-            print(text)
-            break
-        elif text == "Ошибка: неверное состояние (должно быть: исправно, требует ремонта, списано).":
-            print(text)
-            status = input("Статус: ")
+        inputed = input(f"{prefix}{PROMPTS[field]}: ").strip()
+        if inputed == "0":
+            return None
+        value = inventory.normalize(inputed, field)
+        error = inventory.check_field(value, field)
+        if not error:
+            print(str(error) + " (0 - отмена)")
             continue
-        else:
-            print(text)
-            tip = input("Тип: ")
-            name = input("Наименование: ")
-            room = input("Аудитория: ")
-            status = input("Статус: ")
+        return value
+ 
+def ask_item(prompt):
+    """Спрашивает номер, пока не найдётся такая запись. '0' - отмена."""
+    while True:
+        inputed = input(prompt).strip()
+        if inputed == "0":
+            return None
+        item = inventory.find_by_id(inputed)
+        if item is not None:
+            return item
+        print("Ошибка. Неверный ID, попробуйте ещё раз (0 - отмена)")
+ 
+def ask_key(prompt, keys):
+    """keys - словарь {'номер': 'поле'}. '0' - отмена."""
+    while True:
+        inputed = input(prompt).strip()
+        if inputed == "0":
+            return None
+        if inputed in keys:
+            return keys[inputed]
+        print("Ошибка. Неверный ключ, попробуйте ещё раз (0 - отмена)")
+
+def add():
+    values = {}
+    for field in inventory.FIELDS:
+        value = ask_field(field)
+        if value is None:
+            return cancel()
+        values[field] = value
+    print(inventory.add_item(values) + "\n")
 # 3
 def search():
-    key = input("Поиск по какому ключу?.. ")
-    request = input("Что ищем?.. ")
-    while True:
-        if key in ['1','2','3','4','5']:
-            key = ["id", "type", "name", "room", "status"][int(key)-1]
-        if(key=="0" or request=="0"):
-            print("Завершаю...")
-            break
-        ok, text = inventory.search(key,request)
-        if ok:
-            show(text)
-            break
-        elif text=="Ошибка. Неверный ключ, попробуйте ещё раз (1:№, 2:Тип, 3:Наименование, 4:Кабинет, 5:Состояние)":
-            print(text)
-            key = input("Поиск по какому ключу?.. ")
-        else:
-            print(text)
-            break
+    keys = {"1": "id", "2": "type", "3": "name", "4": "room", "5": "status"}
+    key = ask_key("Поиск по какому ключу?.. (1:№, 2:Тип, 3:Наименование, 4:Кабинет, 5:Состояние) ", keys)
+    if key is None:
+        return cancel()
+    request = input("Что ищем?.. ").strip()
+    if request == "0":
+        return cancel()
+    ok, result = inventory.search(key, request)
+    if ok:
+        show(result)
+    else:
+        print(result + "\n")
 # 4
 def change():
-    id = input("№ который меняем... ")
-    key = input("Что именно меняем?.. ")
-    request = input("На что меняем... ")
-    while True:
-        if key in ['2','3','4','5']:
-            key = ["type", "name", "room", "status"][int(key)-2]
-        if(id=="0" or key=="0" or request=="0"):
-            print("Завершаю...")
-            break
-        ok, text = inventory.change(id, key, request)
-        if ok:
-            print(text)
-            break
-        elif text=="Ошибка. Неверный ключ, попробуйте ещё раз (2:Тип, 3:Наименование, 4:Кабинет, 5:Состояние)":
-            print(text)
-            key = input("Изменяем какое поле?.. ")
-        else:
-            print(text)
-            break
+    item = ask_item("№ который меняем... ")
+    if item is None:
+        return cancel()
+    keys = {"2": "type", "3": "name", "4": "room", "5": "status"}
+    field = ask_key("Что именно меняем?.. (2:Тип, 3:Наименование, 4:Кабинет, 5:Состояние) ", keys)
+    if field is None:
+        return cancel()
+    value = ask_field(field, prefix="Новое значение - ")
+    if value is None:
+        return cancel()
+    print(inventory.change(item["id"], field, value) + "\n")
+
 # 5
 def remove():
-    while True:
-        id = input("№ который удаляем... ")
-        if(id=="0"):
-            print("Завершаю... ")
-            break
-        confirm = input(f"Удалить №{id}? (y/n)")
-        if confirm=="y":
-            ok, text = inventory.remove(id)
-            print(text)
-            if ok:
-                break
-        elif confirm=="n":
-            continue
-        else:
-            print("Завершаю...")
-            break
+    item = ask_item("№ который удаляем... ")
+    if item is None:
+        return cancel()
+    confirm = input(f"Удалить №{item['id']} ({item['name']})? (y/n): ").strip().lower()
+    if confirm == "y":
+        print(inventory.remove(item["id"]) + "\n")
+    else:
+        print("Удаление отменено.\n")
 # Основной алгоритм собсна
 def main():
     try:

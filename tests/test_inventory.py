@@ -17,7 +17,7 @@ def setup_test_data(monkeypatch):
 
 
 def test_add_item_success():
-    ok, _ = inventory.add_item({"id": 2, "type": "Монитор", "name": "Samsung 24", "room": "102", "status": "исправно"})
+    ok = inventory.add_item({"type": "Монитор", "name": "Samsung 24", "room": "102", "status": "исправно"})
     assert ok is True
     items = inventory.get()
     assert len(items) == 2
@@ -26,25 +26,25 @@ def test_add_item_success():
 
 
 def test_add_item_duplicate_id():
-    ok, _ = inventory.add_item({"id": 1, "type": "Принтер", "name": "HP", "room": "103", "status": "исправно"})
-    assert ok is False
+    ok = inventory.add_item({"id": 1, "type": "Принтер", "name": "HP", "room": "103", "status": "исправно"})
+    assert ok != 'Успех, итем добавлен'
     assert len(inventory.get()) == 1
 
 
 def test_add_item_empty_fields():
-    ok, _ = inventory.add_item({"id": 3, "type": "", "name": "Без имени", "room": "101", "status": "исправно"})
+    ok = inventory.add_item({"id": 3, "type": "", "name": "Без имени", "room": "101", "status": "исправно"})
     assert ok is False
 
 
 def test_add_item_invalid_status():
-    ok, _ = inventory.add_item({"id": 3, "type": "ПК", "name": "Test", "room": "101", "status": "сломан"})
+    ok = inventory.add_item({"id": 3, "type": "ПК", "name": "Test", "room": "101", "status": "сломан"})
     assert ok is False
 
 
 def test_add_item_status_number_and_case():
-    ok, _ = inventory.add_item({"id": 3, "type": "ПК", "name": "Test", "room": "101", "status": "2"})
+    ok = inventory.add_item({"id": 3, "type": "ПК", "name": "Test", "room": "101", "status": "2"})
     assert ok and inventory.find_by_id(3)["status"] == "требует ремонта"
-    ok, _ = inventory.add_item({"id": 4, "type": "ПК", "name": "Test", "room": "101", "status": "Исправно"})
+    ok = inventory.add_item({"id": 4, "type": "ПК", "name": "Test", "room": "101", "status": "Исправно"})
     assert ok and inventory.find_by_id(4)["status"] == "исправно"
 
 
@@ -58,13 +58,13 @@ def test_next_id_after_removal():
 def test_remove_by_id_not_by_position():
     inventory.inventory[:] = [make(1), make(2), make(3), make(4), make(5)]
     inventory.remove("2")
-    ok, _ = inventory.remove("4")
+    ok= inventory.remove("4")
     assert ok
     assert [i["id"] for i in inventory.get()] == [1, 3, 5]
 
 
 def test_remove_not_found():
-    ok, _ = inventory.remove("99")
+    ok = inventory.remove("99")
     assert ok is False
     assert len(inventory.get()) == 1
 
@@ -72,23 +72,23 @@ def test_remove_not_found():
 def test_change_after_removal_hits_right_item():
     inventory.inventory[:] = [make(1), make(2), make(3)]
     inventory.remove("1")
-    ok, _ = inventory.change("3", "name", "Новое имя")
+    ok = inventory.change("3", "name", "Новое имя")
     assert ok
     assert inventory.find_by_id(3)["name"] == "Новое имя"
     assert inventory.find_by_id(2)["name"] == "Test 2"
 
 
 def test_change_validates_value():
-    ok, _ = inventory.change("1", "status", "фыв")
+    ok = inventory.change("1", "status", "фыв")
     assert ok is False
-    ok, _ = inventory.change("1", "name", " ")
+    ok = inventory.change("1", "name", " ")
     assert ok is False
     assert inventory.find_by_id(1)["status"] == "исправно"
     assert inventory.find_by_id(1)["name"] == "Test 1"
 
 
 def test_change_cannot_edit_id():
-    ok, _ = inventory.change("1", "id", "5")
+    ok = inventory.change("1", "id", "5")
     assert ok is False
     assert inventory.find_by_id(1) is not None
 
