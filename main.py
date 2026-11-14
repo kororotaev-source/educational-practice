@@ -18,9 +18,6 @@ PROMPTS = {
     "room": "Аудитория",
     "status": "Статус (1 - исправно, 2 - требует ремонта, 3 - списано)",
 }
-# 1
-items = inventory.get()
-
 def cancel():
     print("Завершаю...\n")
 
@@ -38,9 +35,6 @@ def show(items):
             f"{item['status']:<15} | "
             f"{item['created_at']}")
     print("-" * 92+"\n")
-# нормализация для функсий
-["исправно", "требует ремонта", "списано"]
-
 def ask_field(field,prefix=""):
     """Спрашивает значение, пока оно не станет допустимым. '0' - отмена (вернёт None)."""
     while True:
@@ -49,8 +43,8 @@ def ask_field(field,prefix=""):
             return None
         value = inventory.normalize(inputed, field)
         error = inventory.check_field(value, field)
-        if not error:
-            print(str(error) + " (0 - отмена)")
+        if error:
+            print(error + " (0 - отмена)")
             continue
         return value
  
